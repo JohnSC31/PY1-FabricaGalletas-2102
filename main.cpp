@@ -2,6 +2,8 @@
 
 #include <QApplication>
 
+// se hicieron cambios en mi rama
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
