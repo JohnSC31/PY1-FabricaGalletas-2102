@@ -8,22 +8,41 @@
 // ESTE ARCHIVO CONTINE LA DEFICION DE TODAS LAS ESTRUCTURAS PARA LA FABRICA DE GALLETAS
 
 // Prototipos
-struct Cookie;
-struct Recipe;
+struct Cookie; // estructura de galleta
+struct Recipe; // la receta
 
-struct Pack;
-struct PackNodo;
-struct PackList;
+struct Pack; // estructura para paquete
+struct PackNodo; // nodo paquete
+struct PackList; // lista de paquetes
 
-struct OrderNodo;
-struct OrderList;
-struct Planner;
+struct OrderNodo; // nodo orden
+struct OrderList; // lista de ordenes
+struct Planner; // planificador
 
-struct Trolley;
-struct Request;
-struct WareHouse;
+struct Trolley; // carrito transportador
+struct Request; // peticion
+struct WareHouse; // almacen
 
-struct GramsConveyorBelt;
+struct GramsConveyorBelt; // banda transportadora de gramos
+struct CookieConveyorBelt; // banda transportadora de galletas
+struct CookieInspectionBelt;
+struct Inspector;
+
+struct ChocolateMachine; // maquina de chocolate
+struct DoughMachine; // maquina de mezcla
+
+struct JointerMachine; // maquina ensambladora
+
+struct Kiln; // horno
+struct Tray; // bandeja
+
+
+
+
+
+
+
+
 
 struct Cookie{
     bool cooked;
@@ -158,6 +177,8 @@ struct WareHouse{
         trolley = new Trolley(trolleyGramCapacity, trolleyDeliveryTime);
     }
 
+    void proccessPetition();
+
 };
 
 // ---------------------------- ESTRUCTURAS LAS BANDAS TRANSPORTADORAS DE GRAMOS (CHOCOLATE, MEZCLA) -------------------
@@ -172,6 +193,7 @@ struct GramsConveyorBelt{
     }
 };
 
+// ---------------------------- ESTRUCTURAS LAS BANDAS TRANSPORTADORAS DE GALLETAS -------------------
 struct CookieConveyorBelt{
     QMutex mutex;
     QQueue<Cookie> queue;
@@ -182,6 +204,32 @@ struct CookieConveyorBelt{
     }
 };
 
+// banda transportadora de galletas con inspectores
+struct CookieInspectionBelt{
+    QMutex mutex;
+    QQueue<Cookie> queue;
+    int maxCookies;
+    Inspector * inspector1;
+    Inspector * inspector2;
+
+    CookieInspectionBelt(){
+//        inspector1 = new Inspector();
+    }
+};
+
+struct Inspector{
+    double wasteProbabilty;
+    int provedCookies;
+    int wastedCookies;
+    bool status;
+
+    Inspector(){
+        wasteProbabilty = 3; // generar un random para el porcentaje de desecho
+        provedCookies = 0;
+        wastedCookies = 0;
+    }
+
+};
 
 // ---------------------------- ESTRUCTURAS PARA LAS MAQUINAS DE MEZCLA Y CHOCOLATE -------------------
 
@@ -204,6 +252,69 @@ struct ChocolateMachine{
         proccessingGrams = 0;
         proccessedGrams = 0;
     }
+
+    void makePetition();
+};
+
+// maquina de mezcla
+struct DoughMachine{
+
+    double proccessTime;
+    double gramsPerTime;
+    double maxGrams;
+    double minGrams;
+    bool status; // si esta encendida o apagada
+    double proccessingGrams;
+    double proccessedGrams;
+
+    DoughMachine(double _proccessTime, double _gramsPerTime, double _maxGrams, double _minGrams){
+        proccessTime = _proccessTime;
+        gramsPerTime = _gramsPerTime;
+        maxGrams = _maxGrams;
+        minGrams = _minGrams;
+        status = true;
+        proccessingGrams = 0;
+        proccessedGrams = 0;
+    }
+
+    void makePetition();
+};
+
+// ---------------------------- ESTRUCTURAS PARA LA MAQUINA EMSAMBLADORA-------------------
+struct JointerMachine{
+    GramsConveyorBelt * chocolateConveyorBelt;
+    GramsConveyorBelt * doughConveyorBelt;
+    double proccessTime;
+    double cookiesPerTime;
+    int madeCookies;
+
+
+    JointerMachine(){
+        chocolateConveyorBelt = new GramsConveyorBelt(300);
+        doughConveyorBelt = new GramsConveyorBelt(300);
+    }
+
+    // crea la galleta con la receta correspondiente y resta de la banda de gramos lo usado
+    // coloca las galletas hechas en la banda de galletas del horno
+    void createCookie();
+
+
+};
+
+
+// ---------------------------- ESTRUCTURAS PARA EL HORNO -------------------
+struct Kiln{
+    int cookieCapacity;
+    QList<Tray> trays;
+    bool status;
+};
+
+struct Tray{
+    int cookieCapacity;
+    int maxCookies;
+    double bakingTime;
+    bool status;
+
 };
 
 
