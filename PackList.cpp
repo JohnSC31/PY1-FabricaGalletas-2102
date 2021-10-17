@@ -17,5 +17,14 @@ void PackList::insertPack(Pack * pack){
 
 // busqueda de un paquete por nombre
 PackNodo * PackList::searchPack(QString name){
+    if (firstNodo != NULL){
+        PackNodo * tmp = firstNodo;
+        do{
+            if (tmp->pack->name == name)
+                return tmp;
+            tmp = tmp->next;
+        }while(tmp!=firstNodo);
+
+    }
     return NULL;
 }

@@ -36,13 +36,7 @@ struct JointerMachine; // maquina ensambladora
 struct Kiln; // horno
 struct Tray; // bandeja
 
-
-
-
-
-
-
-
+struct CookieFactory; // Estructura princial de la fabrica
 
 struct Cookie{
     bool cooked;
@@ -60,11 +54,10 @@ struct Recipe{
     double doughAmount; // la receta por galleta
     double chocolateAmount; // receta por galleta
 
-    // constructor
-    Recipe(double _doughAmount, double _chocolateAmount){
-        doughAmount = _doughAmount;
-        chocolateAmount = _chocolateAmount;
-    }
+public:
+    Recipe(double _doughAmount, double _chocolateAmount);
+    void updateRecipe(double _doughAmount, double _chocolateAmount);
+
 };
 
 // ---------------------------- ESTRUCTURAS PARA LOS PAQUETES -----------------------------------------
@@ -113,72 +106,98 @@ struct PackList{
 
 // ---------------------------- ESTRUCTURAS  PARA PLANIFICACION -----------------------------------------
 struct Order{
+public:
     int packAmount;
-    QString packName;
+    Pack * pack;
 
-    //construtor
-    Order(int _packAmount, QString _packName){
+public:
+    Order(int _packAmount, Pack * _pack){
         packAmount = _packAmount;
-        packName = _packName;
+        pack = _pack;
     }
 };
 
 struct Planner{
-    QList<Order> planProduction;
+    public:
+        QList<Order *> planProduction;
+        Recipe * recipe;
 
-    Planner(){
-    }
-
-    void addOrderPlan(Order * order);
+    public:
+        Planner();
+        void addOrderPlan(Order * order);
+        double calcDoughPlanGrams();
+        double calsChocoPlanGrams();
 };
 
 // ---------------------------- ESTRUCTURAS  PARA EL ALMACEN DE MATERIA PRIMA    -----------------------------------------
-struct Trolley{
+struct Trolley : public QThread{
+public:
     double gramCapacity;
-    QString location;
-    QString destiny;
-    bool status; // si esta encendido o apagado
-    QMutex moving; // cuando esta realizando una entrega
+    double grams; // son los gramos actuales no se puede pasar de gram capacity
     double deliveryTime; // tiempo para realizar una entrega en segundos
+    // punteros a todas las maquinas
+    // int destinato (se actualiza solo cuando no tiene a donde ir)
 
-    Trolley(double _gramCapacity, double _deliveryTime){
-        gramCapacity = _gramCapacity;
-        deliveryTime = _deliveryTime;
-        status = true;
-        // falta agregar los atributos restantes si se necesitan
-    }
+    bool isActive = true;
+    bool isPause = false;
 
+public:
+    Trolley();
+    void __init__(double _gramCapacity, double _deliveryTime);
+    void run();
+
+
+
+    void pause();
+    void resume();
+    void finish();
 
 
 };
 
 struct Request{
+public:
     QString requestType;
     double gramAmount;
-    double deliveryAmount;
+    double deliveredAmount;
+    bool done;
 
-
-    //constructor
+public:
     Request(QString _requestType, double _gramAmount){
         requestType = _requestType;
         gramAmount = _gramAmount;
-        deliveryAmount = 0;
+        deliveredAmount = 0;
+        done = false;
+
     }
+
+
 };
+
 //Solo se elimina una petición cuando amount – deliveryAmount = 0
-
-struct WareHouse{
+struct WareHouse : public QThread{
+public:
+    QQueue<Request *> requests; // cola de peticiones
+    QList<Request *> doneRequests; // lista de peticiones terminadas
+    Request * currentRequest;
     Trolley * trolley;
-    QQueue<Request> requests; // cola de peticiones
-    QList<Request> doneRequests; // lista de peticiones terminadas
 
-    //constructor
-    WareHouse(double trolleyGramCapacity, double trolleyDeliveryTime){
-        trolley = new Trolley(trolleyGramCapacity, trolleyDeliveryTime);
-    }
+    // thread
+    bool isActive = true;
+    bool isPause = false;
 
-    void proccessPetition();
+public:
+    WareHouse();
+    void __init__();
+    void run();
 
+    void updateCurrentRequest();
+    void proccessRequest();
+    void addRequest(Request *);
+
+    void pause();
+    void resume();
+    void finish();
 };
 
 // ---------------------------- ESTRUCTURAS LAS BANDAS TRANSPORTADORAS DE GRAMOS (CHOCOLATE, MEZCLA) -------------------
@@ -234,50 +253,38 @@ struct Inspector{
 // ---------------------------- ESTRUCTURAS PARA LAS MAQUINAS DE MEZCLA Y CHOCOLATE -------------------
 
 struct ChocolateMachine{
-
+public:
     double proccessTime;
     double gramsPerTime;
     double maxGrams;
     double minGrams;
-    bool status; // si esta encendida o apagada
     double proccessingGrams;
     double proccessedGrams;
 
-    ChocolateMachine(double _proccessTime, double _gramsPerTime, double _maxGrams, double _minGrams){
-        proccessTime = _proccessTime;
-        gramsPerTime = _gramsPerTime;
-        maxGrams = _maxGrams;
-        minGrams = _minGrams;
-        status = true;
-        proccessingGrams = 0;
-        proccessedGrams = 0;
-    }
+    //thread
+    bool isActive = true;
+    bool isPause = false;
+
+public:
+    ChocolateMachine(double _proccessTime, double _gramsPerTime, double _maxGrams, double _minGrams);
 
     void makePetition();
 };
 
 // maquina de mezcla
 struct DoughMachine{
+    public:
+        double proccessTime;
+        double gramsPerTime;
+        double maxGrams;
+        double minGrams;
+        bool status; // si esta encendida o apagada
+        double proccessingGrams;
+        double proccessedGrams;
 
-    double proccessTime;
-    double gramsPerTime;
-    double maxGrams;
-    double minGrams;
-    bool status; // si esta encendida o apagada
-    double proccessingGrams;
-    double proccessedGrams;
-
-    DoughMachine(double _proccessTime, double _gramsPerTime, double _maxGrams, double _minGrams){
-        proccessTime = _proccessTime;
-        gramsPerTime = _gramsPerTime;
-        maxGrams = _maxGrams;
-        minGrams = _minGrams;
-        status = true;
-        proccessingGrams = 0;
-        proccessedGrams = 0;
-    }
-
-    void makePetition();
+    public:
+        DoughMachine(double, double, double, double);
+        void makePetition();
 };
 
 // ---------------------------- ESTRUCTURAS PARA LA MAQUINA EMSAMBLADORA-------------------
@@ -318,5 +325,24 @@ struct Tray{
 };
 
 
+// ---------------------------- ESTRUCTURA DE FABRICA -------------------
+
+struct CookieFactory{
+    public: // atributos
+        Planner * planner; // planificador
+        PackList *  packList;
+        WareHouse * wareHouse; // almacen
+        DoughMachine * mixMachine1; // maquina mezcla 1
+        DoughMachine * mixMachine2; // maquina mezcla 2
+        ChocolateMachine * chocolateMachine; // maquina de chocolate
+
+
+
+
+    public: // metodos
+        CookieFactory();
+        void initFactory(); // inicializa los valores predeterminados
+
+};
 
 #endif // STRUCTS_H

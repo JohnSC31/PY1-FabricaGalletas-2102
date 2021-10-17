@@ -12,8 +12,13 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
+    // mas componentes graficos
+
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+
+private slots:
+    void on_btnStart_clicked();
 
 private:
     Ui::MainWindow *ui;
