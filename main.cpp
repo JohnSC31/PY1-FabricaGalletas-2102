@@ -9,8 +9,10 @@ int main(int argc, char *argv[])
     MainWindow w;
     w.show();
 
+    CookieFactory * factory = new CookieFactory();
 
-
+    factory->initFactory();
+    factory->run();
 
     return a.exec();
 }

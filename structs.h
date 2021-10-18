@@ -4,6 +4,7 @@
 #include <QString>
 #include <QQueue>
 #include <QtCore>
+#include <QDebug>
 
 // ESTE ARCHIVO CONTINE LA DEFICION DE TODAS LAS ESTRUCTURAS PARA LA FABRICA DE GALLETAS
 
@@ -100,7 +101,7 @@ struct PackList{
     }
 
     void insertPack(Pack * pack);
-    PackNodo * searchPack(QString);
+    Pack * searchPack(QString);
 
 };
 
@@ -137,15 +138,20 @@ public:
     double deliveryTime; // tiempo para realizar una entrega en segundos
     // punteros a todas las maquinas
     // int destinato (se actualiza solo cuando no tiene a donde ir)
+    int destinyMachine = 0;
+    ChocolateMachine * chocolateMachine;
 
     bool isActive = true;
     bool isPause = false;
 
 public:
     Trolley();
-    void __init__(double _gramCapacity, double _deliveryTime);
+    void __init__(double _gramCapacity, double _deliveryTime, ChocolateMachine * chocolateMachine);
     void run();
 
+    void makeDelivery();
+    void unloadGrams();
+    double loadGrams(double);
 
 
     void pause();
@@ -157,16 +163,16 @@ public:
 
 struct Request{
 public:
-    QString requestType;
     double gramAmount;
     double deliveredAmount;
+    int machineId;
     bool done;
 
 public:
-    Request(QString _requestType, double _gramAmount){
-        requestType = _requestType;
+    Request(double _gramAmount, int _machineId){
         gramAmount = _gramAmount;
         deliveredAmount = 0;
+        machineId = _machineId;
         done = false;
 
     }
@@ -188,7 +194,7 @@ public:
 
 public:
     WareHouse();
-    void __init__();
+    void __init__(ChocolateMachine *);
     void run();
 
     void updateCurrentRequest();
@@ -202,14 +208,17 @@ public:
 
 // ---------------------------- ESTRUCTURAS LAS BANDAS TRANSPORTADORAS DE GRAMOS (CHOCOLATE, MEZCLA) -------------------
 struct GramsConveyorBelt{
+public:
     double maxGrams;
     double grams;
-    QMutex mutex;
 
+public:
     GramsConveyorBelt(double _maxGrams){
         maxGrams = _maxGrams;
         grams = 0;
     }
+
+    double addGrams(double newGrams);
 };
 
 // ---------------------------- ESTRUCTURAS LAS BANDAS TRANSPORTADORAS DE GALLETAS -------------------
@@ -252,7 +261,7 @@ struct Inspector{
 
 // ---------------------------- ESTRUCTURAS PARA LAS MAQUINAS DE MEZCLA Y CHOCOLATE -------------------
 
-struct ChocolateMachine{
+struct ChocolateMachine : public QThread{
 public:
     double proccessTime;
     double gramsPerTime;
@@ -260,15 +269,29 @@ public:
     double minGrams;
     double proccessingGrams;
     double proccessedGrams;
+    int id;
+
+    Planner * planner;
+    WareHouse * wareHouse;
+    GramsConveyorBelt * chocolateConveyorBelt;
 
     //thread
     bool isActive = true;
     bool isPause = false;
 
 public:
-    ChocolateMachine(double _proccessTime, double _gramsPerTime, double _maxGrams, double _minGrams);
+    ChocolateMachine();
+    void __init__(double _proccessTime, double _gramsPerTime, double _maxGrams, double _minGrams, int _id, Planner * planner,
+                  WareHouse * _wareHouse, GramsConveyorBelt *_chocolateConveyorBelt);
+    void run();
 
-    void makePetition();
+    void makeRequest();
+    void proccessGrams();
+    void placeOnConveyorBelt();
+
+    void pause();
+    void resume();
+    void finish();
 };
 
 // maquina de mezcla
@@ -332,6 +355,9 @@ struct CookieFactory{
         Planner * planner; // planificador
         PackList *  packList;
         WareHouse * wareHouse; // almacen
+
+        GramsConveyorBelt * doughConveyorBelt;
+        GramsConveyorBelt * chocolateConveyorBelt;
         DoughMachine * mixMachine1; // maquina mezcla 1
         DoughMachine * mixMachine2; // maquina mezcla 2
         ChocolateMachine * chocolateMachine; // maquina de chocolate
@@ -342,6 +368,7 @@ struct CookieFactory{
     public: // metodos
         CookieFactory();
         void initFactory(); // inicializa los valores predeterminados
+        void run(); // pone a funcionar la fabrica
 
 };
 

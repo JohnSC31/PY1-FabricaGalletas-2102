@@ -12,6 +12,7 @@ SOURCES += \
     ChocolateMachine.cpp \
     CookieFactory.cpp \
     DoughMachine.cpp \
+    GramsConveyorBelt.cpp \
     PackList.cpp \
     Planner.cpp \
     Recipe.cpp \
