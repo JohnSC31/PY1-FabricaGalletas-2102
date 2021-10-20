@@ -4,9 +4,10 @@ WareHouse::WareHouse(){
     trolley = new Trolley();
 }
 
-void WareHouse::__init__(ChocolateMachine * chocolateMachine){
+void WareHouse::__init__(QLabel * _txtWarehouse, ChocolateMachine * chocolateMachine){
     currentRequest = NULL;
     trolley->__init__(300, 3, chocolateMachine);
+    txtWarehouse = _txtWarehouse;
 }
 
 void WareHouse::run(){
@@ -18,17 +19,15 @@ void WareHouse::run(){
             sleep(1);
         }
 
+        printData();
+
         if(currentRequest ==  NULL && !requests.isEmpty()){
            updateCurrentRequest();
-           qDebug() << "Almacen: Actualizo peticion";
         }
 
         if(currentRequest != NULL){
             proccessRequest();
-            qDebug() << "Almacen: Procese la peticion";
         }
-
-        qDebug() << "Almacen: Espero una peticion";
 
         sleep(1);
     }
@@ -48,6 +47,7 @@ void WareHouse::proccessRequest(){
             currentRequest->gramAmount = trolley->loadGrams(currentRequest->gramAmount);
             if(currentRequest == 0){
                 currentRequest->done = true;
+                doneRequests.append(currentRequest); // se agrega a las completadas
             }
         }
 
@@ -62,6 +62,31 @@ void WareHouse::proccessRequest(){
 void WareHouse::addRequest(Request * request){
     requests.enqueue(request);
 }
+
+
+// Se actualiza el ui
+void WareHouse::printData(){
+
+    QQueue<Request* > dataRequests = requests;
+
+    QString str = "Peticiones pendiente \n";
+
+    while(!dataRequests.isEmpty()){
+        str += dataRequests.dequeue()->print();
+    }
+
+    str += "Peticiones procesadas \n";
+
+    for(int i = 0; i < doneRequests.size(); i++){
+         str += doneRequests.at(i)->print();
+    }
+
+    txtWarehouse->setText(str);
+    qDebug() << str;
+}
+
+
+
 
 void WareHouse::pause(){
     isPause = true;

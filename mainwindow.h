@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include "structs.h"
+#include "helper.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -13,15 +14,21 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    // mas componentes graficos
+     CookieFactory * factory = new CookieFactory();
+
 
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+
+
 private slots:
     void on_btnStart_clicked();
+    void on_btnAddPack_clicked();
 
 private:
     Ui::MainWindow *ui;
 };
+
+
 #endif // MAINWINDOW_H

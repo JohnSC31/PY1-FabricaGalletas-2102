@@ -13,6 +13,8 @@ void PackList::insertPack(Pack * pack){
         firstNodo->previous->next = newNodo;
         firstNodo->previous = newNodo;
     }
+
+    printData();
 }
 
 // busqueda de un paquete por nombre
@@ -27,4 +29,17 @@ Pack * PackList::searchPack(QString name){
 
     }
     return NULL;
+}
+
+void PackList::printData(){
+    QString str = "";
+    if (firstNodo != NULL){
+        PackNodo * tmp = firstNodo;
+        do{
+            str += tmp->pack->print() + "\n";
+            tmp = tmp->next;
+        }while(tmp!=firstNodo);
+
+    }
+    lblPacks->setText(str);
 }

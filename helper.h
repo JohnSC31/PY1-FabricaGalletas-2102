@@ -1,6 +1,10 @@
 #ifndef HELPER_H
 #define HELPER_H
 
-QString generateUniqueId();
+#include <QString>
+
+
+bool validStr(QString str);
+bool validNumber(QString strNumber);
 
 #endif // HELPER_H

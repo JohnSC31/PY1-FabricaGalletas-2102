@@ -18,6 +18,7 @@ SOURCES += \
     Recipe.cpp \
     Trolley.cpp \
     WareHouse.cpp \
+    helper.cpp \
     main.cpp \
     mainwindow.cpp
 

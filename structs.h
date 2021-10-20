@@ -6,6 +6,11 @@
 #include <QtCore>
 #include <QDebug>
 
+// Ui includes
+#include <QLabel>
+#include <QTextBlock>
+#include <QTextBrowser>
+
 // ESTE ARCHIVO CONTINE LA DEFICION DE TODAS LAS ESTRUCTURAS PARA LA FABRICA DE GALLETAS
 
 // Prototipos
@@ -63,13 +68,15 @@ public:
 
 // ---------------------------- ESTRUCTURAS PARA LOS PAQUETES -----------------------------------------
 struct Pack{
+
+public:
     int cookies; // cantidad de galletas por paquete
     QString name;
     double packTimePerPack; // tiempo de empaque para este paquete
     int packCounter;
     int finishedPacks;
 
-    // constructor
+public:
     Pack(int _cookies, QString _name, double _packTimePerPack){
         cookies = _cookies;
         name = _name;
@@ -77,6 +84,12 @@ struct Pack{
         finishedPacks = 0;
         packCounter = 0;
     }
+
+    QString print(){
+        return name + " - " + QString::number(cookies);
+    }
+
+
 };
 
 // nodo de una lista circular doblemente enlazada
@@ -95,13 +108,16 @@ struct PackNodo{
 // Es una lista circular doblemente enlazada
 struct PackList{
     PackNodo * firstNodo;
+    QLabel * lblPacks;
 
     PackList(){
         firstNodo = NULL;
+        lblPacks = NULL;
     }
 
     void insertPack(Pack * pack);
     Pack * searchPack(QString);
+    void printData();
 
 };
 
@@ -177,6 +193,13 @@ public:
 
     }
 
+    QString print(){
+        QString typeGrams = machineId != 3 ? "Mezcla" : "Chocolate";
+        QString str = typeGrams + "->" + QString::number(gramAmount) + " - " + QString::number(deliveredAmount) + "\n";
+
+        return str;
+    }
+
 
 };
 
@@ -192,14 +215,18 @@ public:
     bool isActive = true;
     bool isPause = false;
 
+    //ui
+    QLabel * txtWarehouse;
+
 public:
     WareHouse();
-    void __init__(ChocolateMachine *);
+    void __init__(QLabel * _txtWarehouse, ChocolateMachine *);
     void run();
 
     void updateCurrentRequest();
     void proccessRequest();
     void addRequest(Request *);
+    void printData();
 
     void pause();
     void resume();
@@ -364,10 +391,11 @@ struct CookieFactory{
 
 
 
-
     public: // metodos
         CookieFactory();
-        void initFactory(); // inicializa los valores predeterminados
+
+        // inicializa los valores predeterminados
+        void initFactory(QLabel *, QLabel *, QLabel *, QLabel *);
         void run(); // pone a funcionar la fabrica
 
 };
