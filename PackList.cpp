@@ -14,6 +14,7 @@ void PackList::insertPack(Pack * pack){
         firstNodo->previous = newNodo;
     }
 
+    cmbPacks->addItem(pack->name, 0);
     printData();
 }
 

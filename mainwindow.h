@@ -24,7 +24,12 @@ public:
 
 private slots:
     void on_btnStart_clicked();
+    void on_btnAddOrder_clicked();
     void on_btnAddPack_clicked();
+    void on_btnUpdateRecipe_clicked();
+    void on_btnUpdateTrolley_clicked();
+    // control de maquinas y personas
+    void on_btnControlTrolley_clicked();
 
 private:
     Ui::MainWindow *ui;

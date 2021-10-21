@@ -4,10 +4,9 @@ WareHouse::WareHouse(){
     trolley = new Trolley();
 }
 
-void WareHouse::__init__(QLabel * _txtWarehouse, ChocolateMachine * chocolateMachine){
+void WareHouse::__init__(ChocolateMachine * chocolateMachine, DoughMachine * doughMachine1, DoughMachine * doughMachine2){
     currentRequest = NULL;
-    trolley->__init__(300, 3, chocolateMachine);
-    txtWarehouse = _txtWarehouse;
+    trolley->__init__(300, 3, chocolateMachine, doughMachine1, doughMachine2);
 }
 
 void WareHouse::run(){
@@ -23,10 +22,7 @@ void WareHouse::run(){
 
         if(currentRequest ==  NULL && !requests.isEmpty()){
            updateCurrentRequest();
-        }
-
-        if(currentRequest != NULL){
-            proccessRequest();
+           proccessRequest();
         }
 
         sleep(1);
@@ -41,17 +37,18 @@ void WareHouse::updateCurrentRequest(){
 
 // manipula el carrito hasta que complete la currentrequest
 void WareHouse::proccessRequest(){
+    double load = currentRequest->gramAmount;
     while(!currentRequest->done){
         if(trolley->destinyMachine == 0){
             trolley->destinyMachine = currentRequest->machineId;
-            currentRequest->gramAmount = trolley->loadGrams(currentRequest->gramAmount);
-            if(currentRequest == 0){
+            load = trolley->loadGrams(load); // cargamos y regresa el exceso
+            currentRequest->deliveredAmount = currentRequest->gramAmount - load;
+            if(load == 0){ // cargamos todo
                 currentRequest->done = true;
                 doneRequests.append(currentRequest); // se agrega a las completadas
             }
-        }
 
-        qDebug() << "Almacen: Estoy procesando peticion";
+        }
         if (!currentRequest->done)
             sleep(1); // espera un segundo para volver a intentar cargar el carrito
     }
@@ -82,7 +79,6 @@ void WareHouse::printData(){
     }
 
     txtWarehouse->setText(str);
-    qDebug() << str;
 }
 
 

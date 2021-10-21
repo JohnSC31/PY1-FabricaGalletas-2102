@@ -8,8 +8,9 @@
 
 // Ui includes
 #include <QLabel>
-#include <QTextBlock>
 #include <QTextBrowser>
+#include <QComboBox>
+#include <QLineEdit>
 
 // ESTE ARCHIVO CONTINE LA DEFICION DE TODAS LAS ESTRUCTURAS PARA LA FABRICA DE GALLETAS
 
@@ -60,8 +61,12 @@ struct Recipe{
     double doughAmount; // la receta por galleta
     double chocolateAmount; // receta por galleta
 
+    // ui
+    QLineEdit * inputDough;
+    QLineEdit * inputChocolate;
+
 public:
-    Recipe(double _doughAmount, double _chocolateAmount);
+    Recipe();
     void updateRecipe(double _doughAmount, double _chocolateAmount);
 
 };
@@ -109,6 +114,7 @@ struct PackNodo{
 struct PackList{
     PackNodo * firstNodo;
     QLabel * lblPacks;
+    QComboBox * cmbPacks;
 
     PackList(){
         firstNodo = NULL;
@@ -132,18 +138,26 @@ public:
         packAmount = _packAmount;
         pack = _pack;
     }
+
+    QString print(){
+        return QString::number(packAmount) + " - " + pack->name;
+    }
 };
 
 struct Planner{
     public:
         QList<Order *> planProduction;
         Recipe * recipe;
+        QLabel * lblProduction;
+        QLineEdit * inputDough;
+        QLineEdit * inputChocolate;
 
     public:
         Planner();
         void addOrderPlan(Order * order);
         double calcDoughPlanGrams();
         double calsChocoPlanGrams();
+        void printData();
 };
 
 // ---------------------------- ESTRUCTURAS  PARA EL ALMACEN DE MATERIA PRIMA    -----------------------------------------
@@ -156,18 +170,26 @@ public:
     // int destinato (se actualiza solo cuando no tiene a donde ir)
     int destinyMachine = 0;
     ChocolateMachine * chocolateMachine;
+    DoughMachine * doughMachine1;
+    DoughMachine * doughMachine2;
 
     bool isActive = true;
     bool isPause = false;
 
+    QLineEdit * inpCapacityGrams;
+    QLineEdit * inpDeliveryTime;
+
 public:
     Trolley();
-    void __init__(double _gramCapacity, double _deliveryTime, ChocolateMachine * chocolateMachine);
+    void __init__(double _gramCapacity, double _deliveryTime, ChocolateMachine * chocolateMachine,  DoughMachine * doughMachine1,
+    DoughMachine * doughMachine2);
     void run();
 
     void makeDelivery();
     void unloadGrams();
     double loadGrams(double);
+    void updateValues(double _gramCapacity, double _deliveryTime);
+    void printValues();
 
 
     void pause();
@@ -220,7 +242,7 @@ public:
 
 public:
     WareHouse();
-    void __init__(QLabel * _txtWarehouse, ChocolateMachine *);
+    void __init__(ChocolateMachine *, DoughMachine *, DoughMachine *);
     void run();
 
     void updateCurrentRequest();
@@ -238,11 +260,13 @@ struct GramsConveyorBelt{
 public:
     double maxGrams;
     double grams;
+    QMutex * mutex;
 
 public:
-    GramsConveyorBelt(double _maxGrams){
+    GramsConveyorBelt(double _maxGrams, QMutex * _mutex){
         maxGrams = _maxGrams;
         grams = 0;
+        mutex = _mutex;
     }
 
     double addGrams(double newGrams);
@@ -306,6 +330,13 @@ public:
     bool isActive = true;
     bool isPause = false;
 
+    //ui
+    QLabel * lblChocolateMachine;
+    QLineEdit * inpChocolateMachineProcessTime;
+    QLineEdit * inpChocolateMachineGramsTime;
+    QLineEdit * inpChocolateMachineMax;
+    QLineEdit * inpChocolateMachineMin;
+
 public:
     ChocolateMachine();
     void __init__(double _proccessTime, double _gramsPerTime, double _maxGrams, double _minGrams, int _id, Planner * planner,
@@ -315,6 +346,9 @@ public:
     void makeRequest();
     void proccessGrams();
     void placeOnConveyorBelt();
+    void updateConfig(double _proccessTime, double _gramsPerTime, double _maxGrams, double _minGrams);
+    void printData();
+    void printConfig();
 
     void pause();
     void resume();
@@ -322,19 +356,47 @@ public:
 };
 
 // maquina de mezcla
-struct DoughMachine{
+struct DoughMachine : public QThread{
     public:
         double proccessTime;
         double gramsPerTime;
         double maxGrams;
         double minGrams;
-        bool status; // si esta encendida o apagada
         double proccessingGrams;
         double proccessedGrams;
+        int id;
+
+        Planner * planner;
+        WareHouse * wareHouse;
+        GramsConveyorBelt * doughConveyorBelt;
+
+        //thread
+        bool isActive = true;
+        bool isPause = false;
+
+        //ui
+        QLabel * lblDoughMachine;
+        QLineEdit * inpDoughMachineProcessTime;
+        QLineEdit * inpDoughMachineGramsTime;
+        QLineEdit * inpDoughMachineMax;
+        QLineEdit * inpDoughMachineMin;
 
     public:
-        DoughMachine(double, double, double, double);
-        void makePetition();
+        DoughMachine();
+        void __init__(double _proccessTime, double _gramsPerTime, double _maxGrams, double _minGrams, int _id,
+                      Planner * planner, WareHouse * _wareHouse, GramsConveyorBelt * _doughConveyorBelt);
+        void run();
+
+        void makeRequest();
+        void proccessGrams();
+        void placeOnConveyorBelt();
+        void updateConfig(double _proccessTime, double _gramsPerTime, double _maxGrams, double minGrams);
+        void printData();
+        void printConfig();
+
+        void pause();
+        void resume();
+        void finish();
 };
 
 // ---------------------------- ESTRUCTURAS PARA LA MAQUINA EMSAMBLADORA-------------------
@@ -347,8 +409,7 @@ struct JointerMachine{
 
 
     JointerMachine(){
-        chocolateConveyorBelt = new GramsConveyorBelt(300);
-        doughConveyorBelt = new GramsConveyorBelt(300);
+
     }
 
     // crea la galleta con la receta correspondiente y resta de la banda de gramos lo usado
@@ -385,17 +446,19 @@ struct CookieFactory{
 
         GramsConveyorBelt * doughConveyorBelt;
         GramsConveyorBelt * chocolateConveyorBelt;
-        DoughMachine * mixMachine1; // maquina mezcla 1
-        DoughMachine * mixMachine2; // maquina mezcla 2
+        DoughMachine * doughMachine1; // maquina mezcla 1
+        DoughMachine * doughMachine2; // maquina mezcla 2
         ChocolateMachine * chocolateMachine; // maquina de chocolate
 
-
+        // mutex
+        QMutex doughConveyorBeltMutex; // mutex para la banda de gramos de mezcla
+        QMutex chocoConveyorBeltMutex; // mutex para a banda de gamos de chocolate
 
     public: // metodos
         CookieFactory();
 
         // inicializa los valores predeterminados
-        void initFactory(QLabel *, QLabel *, QLabel *, QLabel *);
+        void initFactory();
         void run(); // pone a funcionar la fabrica
 
 };

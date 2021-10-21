@@ -2,11 +2,12 @@
 
 
 Planner::Planner(){
-   recipe = new Recipe(50, 30); // receta inicial
+   recipe = new Recipe();
 }
 
 void Planner::addOrderPlan(Order * order){
     planProduction.append(order);
+    printData();
 }
 
 
@@ -29,4 +30,13 @@ double Planner::calsChocoPlanGrams(){
     }
 
     return totalGrams;
+}
+
+void Planner::printData(){
+     QString str = "";
+    for(int i = 0; i < planProduction.size(); i++){
+         str += planProduction.at(i)->print() + "\n";
+    }
+
+    lblProduction->setText(str);
 }

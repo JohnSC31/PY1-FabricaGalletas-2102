@@ -7,28 +7,30 @@ CookieFactory::CookieFactory(){
 
     wareHouse = new WareHouse();
 
-    doughConveyorBelt = new GramsConveyorBelt(100);
-    chocolateConveyorBelt = new GramsConveyorBelt(100);
+    doughConveyorBelt = new GramsConveyorBelt(100, &doughConveyorBeltMutex);
+    chocolateConveyorBelt = new GramsConveyorBelt(100, &chocoConveyorBeltMutex);
 
     chocolateMachine = new ChocolateMachine();
 
-    mixMachine1 = new DoughMachine(2, 10, 400, 100);
-    mixMachine2 = new DoughMachine(2, 10, 400, 100);
+    doughMachine1 = new DoughMachine();
+    doughMachine2 = new DoughMachine();
 }
 
 
-void CookieFactory::initFactory(QLabel * lblWareHouse, QLabel * lblProduction, QLabel * _lblPacks, QLabel * lblChocolateMachine){
+void CookieFactory::initFactory(){
     //inicializacion de las estructuras
     chocolateMachine->__init__(3, 20, 300, 50, 3, planner, wareHouse, chocolateConveyorBelt);
-    wareHouse->__init__(lblWareHouse, chocolateMachine); // se pasan las maquinas de mezcla
+    doughMachine1->__init__(3, 20, 300, 50, 1, planner, wareHouse, doughConveyorBelt);
+    doughMachine2->__init__(3, 20, 300, 50, 1, planner, wareHouse, doughConveyorBelt);
+    wareHouse->__init__(chocolateMachine, doughMachine1, doughMachine2); // se pasan las maquinas de mezcla
 
     // inicializacion de la lista de paquetes
-    packList->lblPacks = _lblPacks;
     packList->insertPack(new Pack(4, "Paquetito", 3));
     packList->insertPack(new Pack(10, "Paquete", 4));
     packList->insertPack(new Pack(16, "Tubo", 5));
 
     // inicializacion de ordenes
+    planner->recipe->updateRecipe(30, 20);
     planner->addOrderPlan(new Order(100, packList->searchPack("Paquetito")));
 }
 

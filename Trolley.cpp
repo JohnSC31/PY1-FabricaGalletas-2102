@@ -4,11 +4,15 @@ Trolley::Trolley(){
 
 }
 
-void Trolley::__init__(double _gramCapacity, double _deliveryTime, ChocolateMachine * _chocolateMachine){
+void Trolley::__init__(double _gramCapacity, double _deliveryTime, ChocolateMachine * _chocolateMachine, DoughMachine * _doughMachine1,
+                       DoughMachine * _doughMachine2){
     gramCapacity = _gramCapacity;
     deliveryTime = _deliveryTime;
     grams = 0;
     chocolateMachine = _chocolateMachine;
+    doughMachine1 = _doughMachine1;
+    doughMachine2 = _doughMachine2;
+    printValues();
 }
 
 
@@ -24,8 +28,6 @@ void Trolley::run(){
             makeDelivery();
         }
 
-
-        qDebug() << "Carrito: Estoy esperando entrega";
         sleep(1);
         // lo que hace cuando esta activo
     }
@@ -35,7 +37,6 @@ void Trolley::run(){
 // si esta excede la capacidad devuelve el exceso
 double Trolley::loadGrams(double deliveryGrams){
     grams += deliveryGrams;
-    qDebug() << "Carrito: Me cargan";
     double gramExcess = gramCapacity - grams;
     if(gramExcess < 0){
         // hay un exceso de gramos en el carrito
@@ -52,21 +53,31 @@ void Trolley::makeDelivery(){
     unloadGrams(); // descarga los gramos en la maquina indicada
     sleep(deliveryTime / 2);
     destinyMachine = 0; // ya no tiene que hacer nada
-    qDebug() << "Carrito: Realice entrega";
 }
 
 
 void Trolley::unloadGrams(){
     if(destinyMachine == 1){// maquina de mezcla 1
-
+        doughMachine1->proccessingGrams += grams;
     }else if(destinyMachine == 2){ // maquina de mezcla 2
-
+        doughMachine2->proccessingGrams += grams;
     }else if(destinyMachine == 3){ // maquina de mezcla 3
         chocolateMachine->proccessingGrams += grams;
     }
 
     grams = 0; // se resetean los gramos
 
+}
+
+void Trolley::updateValues(double _gramCapacity, double _deliveryTime){
+    gramCapacity = _gramCapacity;
+    deliveryTime = _deliveryTime;
+    printValues();
+}
+
+void Trolley::printValues(){
+    inpCapacityGrams->setText(QString::number(gramCapacity));
+    inpDeliveryTime->setText(QString::number(deliveryTime));
 }
 
 void Trolley::pause(){
