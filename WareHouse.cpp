@@ -74,7 +74,7 @@ void WareHouse::printData(){
 
     str += "Peticiones procesadas \n";
 
-    for(int i = 0; i < doneRequests.size(); i++){
+    for(int i = doneRequests.size() - 1; i >= 0; i--){
          str += doneRequests.at(i)->print();
     }
 

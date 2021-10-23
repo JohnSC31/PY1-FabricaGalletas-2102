@@ -15,8 +15,12 @@ bool validStr(QString str){
 // recibe un string y verifica si se puede convertir a number
 bool validNumber(QString strNumber){
     try {
-        double number = strNumber.toDouble();
-        return true; // puede ser converido a double
+        if(validStr(strNumber)){
+            double number = strNumber.toDouble();
+            return true; // puede ser converido a double
+        }else
+            return false;
+
     }  catch (...) {
         return false;
     }

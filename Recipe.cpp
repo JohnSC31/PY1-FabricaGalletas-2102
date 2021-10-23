@@ -8,7 +8,8 @@ void Recipe::updateRecipe(double _doughAmount, double _chocolateAmount){
     doughAmount = _doughAmount;
     chocolateAmount = _chocolateAmount;
     // se imprime en la interfaz
-    inputChocolate->setText(QString::number(doughAmount));
-    inputDough->setText(QString::number(chocolateAmount));
+    inputDough->setText(QString::number(doughAmount));
+    inputChocolate->setText(QString::number(chocolateAmount));
+
 
 }

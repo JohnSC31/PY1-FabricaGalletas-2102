@@ -30,13 +30,20 @@ void ChocolateMachine::run(){
         }
         printData();
         // funcionamiento de la maquina
-        if(planner->calsChocoPlanGrams() > proccessedGrams){
+        if(planner->calcChocoPlanGrams() > proccessedGrams){
             if(proccessingGrams < minGrams){
                 makeRequest();
             }
-            proccessGrams();
+            if(proccessingGrams - gramsPerTime >= 0){
+                proccessGrams();
+            }else{
+                makeRequest();
+            }
 
-         }
+
+         }else{
+            sleep(2); // si ya completa el plan va a esperar 2 segundos para revisar y hay ordenes nuevas
+        }
 
     }
 
@@ -54,18 +61,16 @@ void ChocolateMachine::makeRequest(){
 }
 
 void ChocolateMachine::proccessGrams(){
-    if(proccessingGrams - gramsPerTime >= 0){
-        proccessingGrams -= gramsPerTime;
-        sleep(proccessTime);
-        proccessedGrams += gramsPerTime;
-        double gramsExcced = chocolateConveyorBelt->addGrams(gramsPerTime);
-        if(gramsExcced > 0){
-            proccessingGrams += gramsExcced; // regresan los gramos que no pasaron a la banda
-            proccessedGrams -= gramsExcced;
-            pause(); // la maquina se pausa ya que la banda esta llena
-        }
-    }else{
-        makeRequest();
+    proccessingGrams -= gramsPerTime;
+    sleep(proccessTime);
+    proccessedGrams += gramsPerTime;
+    chocolateConveyorBelt->mutex->lock();
+    double gramsExcced = chocolateConveyorBelt->addGrams(gramsPerTime);
+    chocolateConveyorBelt->mutex->unlock();
+    if(gramsExcced > 0){
+        proccessingGrams += gramsExcced; // regresan los gramos que no pasaron a la banda
+        proccessedGrams -= gramsExcced;
+        pause(); // la maquina se pausa ya que la banda esta llena
     }
 }
 
@@ -92,10 +97,12 @@ void ChocolateMachine::printConfig(){
 // funciones para control del thread
 void ChocolateMachine::pause(){
     isPause = true;
+    controlBtn->setText("Encender");
 }
 
 void ChocolateMachine::resume(){
     isPause = false;
+    controlBtn->setText("Apagar");
 }
 
 void ChocolateMachine::finish(){

@@ -81,9 +81,11 @@ void Trolley::printValues(){
 }
 
 void Trolley::pause(){
+    controlBtn->setText("Encender");
     isPause = true;
 }
 void Trolley::resume(){
+    controlBtn->setText("Apagar");
     isPause = false;
 }
 void Trolley::finish(){

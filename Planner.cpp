@@ -16,17 +16,19 @@ double Planner::calcDoughPlanGrams(){
     double totalGrams = 0;
 
     for (int i = 0; i < planProduction.size(); ++i) {
-        totalGrams += planProduction.at(i)->pack->cookies * recipe->doughAmount;
+        int orderCookies = planProduction.at(i)->pack->cookies * planProduction.at(i)->packAmount;
+        totalGrams += orderCookies * recipe->doughAmount;
     }
 
     return totalGrams;
 }
 
-double Planner::calsChocoPlanGrams(){
+double Planner::calcChocoPlanGrams(){
     double totalGrams = 0;
 
     for (int i = 0; i < planProduction.size(); ++i) {
-        totalGrams += planProduction.at(i)->pack->cookies * recipe->chocolateAmount;
+        int orderCookies = planProduction.at(i)->pack->cookies * planProduction.at(i)->packAmount;
+        totalGrams += orderCookies * recipe->chocolateAmount;
     }
 
     return totalGrams;

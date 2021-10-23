@@ -10,12 +10,16 @@ CONFIG += c++11
 
 SOURCES += \
     ChocolateMachine.cpp \
+    CookieConveyorBelt.cpp \
     CookieFactory.cpp \
     DoughMachine.cpp \
     GramsConveyorBelt.cpp \
+    JointerMachine.cpp \
+    Kiln.cpp \
     PackList.cpp \
     Planner.cpp \
     Recipe.cpp \
+    Tray.cpp \
     Trolley.cpp \
     WareHouse.cpp \
     helper.cpp \

@@ -11,6 +11,7 @@
 #include <QTextBrowser>
 #include <QComboBox>
 #include <QLineEdit>
+#include <QPushButton>
 
 // ESTE ARCHIVO CONTINE LA DEFICION DE TODAS LAS ESTRUCTURAS PARA LA FABRICA DE GALLETAS
 
@@ -156,7 +157,7 @@ struct Planner{
         Planner();
         void addOrderPlan(Order * order);
         double calcDoughPlanGrams();
-        double calsChocoPlanGrams();
+        double calcChocoPlanGrams();
         void printData();
 };
 
@@ -178,6 +179,7 @@ public:
 
     QLineEdit * inpCapacityGrams;
     QLineEdit * inpDeliveryTime;
+    QPushButton * controlBtn;
 
 public:
     Trolley();
@@ -262,25 +264,44 @@ public:
     double grams;
     QMutex * mutex;
 
+    //ui
+    QLabel * lblGramsConveyorBelt;
+    QLineEdit * inpGramsConveyorBeltMax;
+
 public:
-    GramsConveyorBelt(double _maxGrams, QMutex * _mutex){
-        maxGrams = _maxGrams;
-        grams = 0;
-        mutex = _mutex;
+    GramsConveyorBelt(){
     }
 
+public:
+    void __init__(double _maxGrams, QMutex * _mutex);
     double addGrams(double newGrams);
+    void printData();
+    void printConfig();
+    void updateConfig(double);
 };
 
 // ---------------------------- ESTRUCTURAS LAS BANDAS TRANSPORTADORAS DE GALLETAS -------------------
 struct CookieConveyorBelt{
-    QMutex mutex;
-    QQueue<Cookie> queue;
+public:
+    QMutex * mutex;
+    int cookies;
     int maxCookies;
 
-    CookieConveyorBelt(int _maxCookies){
-        maxCookies = _maxCookies;
+    //ui
+    QLabel * lblCookieBelt;
+    QLineEdit * inpCookieBeltMax;
+
+public:
+    CookieConveyorBelt(){
+
     }
+
+    void __init__(int _maxCookies, QMutex * _mutex);\
+    bool canAddCookies(int newCookies);
+    int addCookies(int newCookies);
+    void printData();
+    void printConfig();
+    void updateConfig(double);
 };
 
 // banda transportadora de galletas con inspectores
@@ -336,6 +357,7 @@ public:
     QLineEdit * inpChocolateMachineGramsTime;
     QLineEdit * inpChocolateMachineMax;
     QLineEdit * inpChocolateMachineMin;
+    QPushButton * controlBtn;
 
 public:
     ChocolateMachine();
@@ -380,6 +402,7 @@ struct DoughMachine : public QThread{
         QLineEdit * inpDoughMachineGramsTime;
         QLineEdit * inpDoughMachineMax;
         QLineEdit * inpDoughMachineMin;
+        QPushButton * controlBtn;
 
     public:
         DoughMachine();
@@ -399,39 +422,112 @@ struct DoughMachine : public QThread{
         void finish();
 };
 
-// ---------------------------- ESTRUCTURAS PARA LA MAQUINA EMSAMBLADORA-------------------
-struct JointerMachine{
+// ---------------------------- ESTRUCTURAS PARA LA MAQUINA ENSAMBLADORA-------------------
+struct JointerMachine : public QThread{
+public:
     GramsConveyorBelt * chocolateConveyorBelt;
     GramsConveyorBelt * doughConveyorBelt;
+    CookieConveyorBelt * cookieConveyorBelt;
+    Planner * planner;
     double proccessTime;
     double cookiesPerTime;
     int madeCookies;
 
+    //thread
+    bool isActive = true;
+    bool isPause = false;
 
-    JointerMachine(){
+    //ui
+    QLabel * lblJointerMachine;
+    QLineEdit * inpJointerMachineProccessTime;
+    QLineEdit * inpJointerMachinePerTime;
+    QPushButton * controlBtn;
 
-    }
+public:
+    JointerMachine();
+    void __init__(double _proccessTime, double _cookiesPerTime, Planner * _planner, GramsConveyorBelt * _chocolateConveyorBelt,
+                  GramsConveyorBelt * _doughConveyorBelt, CookieConveyorBelt * _cookieConveyorBelt);
+    void run();
 
-    // crea la galleta con la receta correspondiente y resta de la banda de gramos lo usado
-    // coloca las galletas hechas en la banda de galletas del horno
-    void createCookie();
+    bool canMakeCookies(); // verifica si hay gramos en las bandas para hacer las galletas por tiempo
+    void getGrams(); // saca gramos de mezcla y chocolate de las bandas
+    void makeCookies(); // espera el tiempo y hace las galletas y las coloca en la banda de galletas
+    void placeOnConveyorBelt(); // coloca en la banda de galletas
+    void updateConfig(double _proccessTime, double _cookiesPerTime);
+    void printData(); // imprime datos actuales
+    void printConfig();
+
+    void pause();
+    void resume();
+    void finish();
 
 
 };
 
 
 // ---------------------------- ESTRUCTURAS PARA EL HORNO -------------------
-struct Kiln{
+struct Kiln : public QThread{
+public:
     int cookieCapacity;
-    QList<Tray> trays;
-    bool status;
+    QList<Tray *> trays;
+    CookieConveyorBelt * cookieConveyorBelt1; // banda 1
+    CookieConveyorBelt * cookieConveyorBelt2; // banda 2
+
+    //thread
+    bool isActive = true;
+    bool isPause = false;
+
+    //ui
+    QPushButton * controlBtn;
+    QLineEdit * inpCapacity;
+    QLabel * lblKilnTrays;
+    QComboBox * cmbTrays;
+    QLineEdit * inpKilnTrayCookies;
+    QLineEdit * inpKilnBakingTime;
+
+public:
+    Kiln();
+    void __init__(int _cookieCapacity, CookieConveyorBelt * _cookieConveyorBelt1, CookieConveyorBelt * _cookieConveyorBelt2);
+    void run();
+
+    void updateConfig(int _cookieCapacity);
+    void printData();
+    void printConfig();
+    void fillTrays();
+    void activeTrays();
+    void printTrayConfig(int indexTray);
+    void updateTrayConfig(int indexTray, int _maxCookies, int _bakingTime);
+    void pause();
+    void resume();
+    void finish();
 };
 
-struct Tray{
-    int cookieCapacity;
+
+struct Tray : public QThread{
     int maxCookies;
     double bakingTime;
-    bool status;
+    int cookies;
+    bool isBaking = false; // para ver si esta ocupada o no
+    CookieConveyorBelt * cookieConveyorBelt;
+
+    //thread
+    bool isActive = true;
+    bool isPause = false;
+
+public:
+    Tray();
+    void __init__(int maxCookies, int bakingTime, CookieConveyorBelt * _cookieConveyorBelt2);
+    void run();
+
+    void updateConfig();
+    void printConfig();
+    int addCookies(int newCookies);
+    bool isFull();
+    void bakeCookies();
+
+    void pause();
+    void resume();
+    void finish();
 
 };
 
@@ -449,10 +545,17 @@ struct CookieFactory{
         DoughMachine * doughMachine1; // maquina mezcla 1
         DoughMachine * doughMachine2; // maquina mezcla 2
         ChocolateMachine * chocolateMachine; // maquina de chocolate
+        Kiln * kiln;
+
+        JointerMachine * jointerMachine;
+        CookieConveyorBelt * cookieConveyorBelt1;
+        CookieConveyorBelt * cookieConveyorBelt2;
 
         // mutex
         QMutex doughConveyorBeltMutex; // mutex para la banda de gramos de mezcla
         QMutex chocoConveyorBeltMutex; // mutex para a banda de gamos de chocolate
+        QMutex cookieConveyorBelt1Mutex;
+        QMutex cookieConveyorBelt2Mutex;
 
     public: // metodos
         CookieFactory();

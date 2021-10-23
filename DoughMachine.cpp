@@ -35,9 +35,16 @@ void DoughMachine::run(){
             if(proccessingGrams < minGrams){
                 makeRequest();
             }
-            proccessGrams();
+            if(proccessingGrams - gramsPerTime >= 0){
+                proccessGrams();
+            }else{
+                makeRequest();
+            }
 
-         }
+
+         }else{
+            sleep(2); // si ya completa el plan va a esperar 2 segundos para revisar y hay ordenes nuevas
+        }
 
     }
 }
@@ -52,20 +59,16 @@ void DoughMachine::makeRequest(){
 }
 
 void DoughMachine::proccessGrams(){
-    if(proccessingGrams - gramsPerTime >= 0){
-        proccessingGrams -= gramsPerTime;
-        sleep(proccessTime);
-        proccessedGrams += gramsPerTime;
-        doughConveyorBelt->mutex->lock();
-        double gramsExcced = doughConveyorBelt->addGrams(gramsPerTime);
-        doughConveyorBelt->mutex->unlock();
-        if(gramsExcced > 0){
-            proccessingGrams += gramsExcced; // regresan los gramos que no pasaron a la banda
-            proccessedGrams -= gramsExcced;
-            pause(); // la maquina se pausa ya que la banda esta llena
-        }
-    }else{
-        makeRequest();
+    proccessingGrams -= gramsPerTime;
+    sleep(proccessTime);
+    proccessedGrams += gramsPerTime;
+    doughConveyorBelt->mutex->lock();
+    double gramsExcced = doughConveyorBelt->addGrams(gramsPerTime);
+    doughConveyorBelt->mutex->unlock();
+    if(gramsExcced > 0){
+        proccessingGrams += gramsExcced; // regresan los gramos que no pasaron a la banda
+        proccessedGrams -= gramsExcced;
+        pause(); // la maquina se pausa ya que la banda esta llena
     }
 }
 
@@ -92,10 +95,12 @@ void DoughMachine::printConfig(){
 // funciones para control del thread
 void DoughMachine::pause(){
     isPause = true;
+    controlBtn->setText("Encender");
 }
 
 void DoughMachine::resume(){
     isPause = false;
+    controlBtn->setText("Apagar");
 }
 
 void DoughMachine::finish(){

@@ -28,8 +28,24 @@ private slots:
     void on_btnAddPack_clicked();
     void on_btnUpdateRecipe_clicked();
     void on_btnUpdateTrolley_clicked();
+    void on_btnUpdateDoughMachine1_clicked();
+    void on_btnUpdateDoughMachine2_clicked();
+    void on_btnUpdateChocolateMachine_clicked();
+    // actualizar maquinas y personas
+    void on_btnUpdateDoughBelt_clicked();
+    void on_btnUpdateChocolateBelt_clicked();
+    void on_btnUpdateCookieBelt1_clicked();
+    void on_btnUpdateKiln_clicked();
+    void on_btnUpdateCookieBelt2_clicked();
+    void on_cmbTrays_change(int index);
+    void on_btnUpdateTray_clicked();
     // control de maquinas y personas
     void on_btnControlTrolley_clicked();
+    void on_btnControlChocolateMachine_clicked();
+    void on_btnControlDoughMachine1_clicked();
+    void on_btnControlDoughMachine2_clicked();
+    void on_btnControlJointerMachine_clicked();
+    void on_btnControlKiln_clicked();
 
 private:
     Ui::MainWindow *ui;
