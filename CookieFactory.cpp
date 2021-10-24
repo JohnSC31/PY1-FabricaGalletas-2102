@@ -18,8 +18,16 @@ CookieFactory::CookieFactory(){
     jointerMachine = new JointerMachine();
     cookieConveyorBelt1 = new CookieConveyorBelt();
     cookieConveyorBelt2 = new CookieConveyorBelt();
+    cookieConveyorBelt3 = new CookieConveyorBelt();
+    cookieConveyorBelt4 = new CookieConveyorBelt();
 
     kiln = new Kiln();
+
+    qosDepartment = new Qos();
+
+    baler = new Baler();
+
+    finalWarehouse = new FinalWarehouse();
 }
 
 
@@ -39,16 +47,26 @@ void CookieFactory::initFactory(){
 
     // inicializacion de ordenes
     planner->recipe->updateRecipe(20, 15);
-    planner->addOrderPlan(new Order(100, packList->searchPack("Paquetito")));
+    planner->addOrderPlan(new Order(4, packList->searchPack("Paquete")));
 
     cookieConveyorBelt1->__init__(50, &cookieConveyorBelt1Mutex);
     // maquina ensambladora
     jointerMachine->__init__(4, 5, planner, chocolateConveyorBelt, doughConveyorBelt, cookieConveyorBelt1);
 
-    // banda 2 para la empacadora
+    // banda 2 para la horno
     cookieConveyorBelt2->__init__(50, &cookieConveyorBelt2Mutex);
     // horno
     kiln->__init__(50, cookieConveyorBelt1, cookieConveyorBelt2);
+    // banda para la inspeccion
+    cookieConveyorBelt3->__init__(100, &cookieConveyorBelt3Mutex);
+    cookieConveyorBelt4->__init__(50, &cookieConveyorBelt4Mutex);
+    // inspeccion
+    qosDepartment->__init__(cookieConveyorBelt2, cookieConveyorBelt3, cookieConveyorBelt4);
+    // empacadora
+    baler->__init__(5, planner, cookieConveyorBelt4);
+
+    // almacen final
+    finalWarehouse->__init__(planner);
 }
 
 // pone a funcionar a todas las estructuras
@@ -59,4 +77,29 @@ void CookieFactory::run(){
     doughMachine2->start();
     jointerMachine->start();
     kiln->start();
+    qosDepartment->start();
+    baler->start();
+    finalWarehouse->start();
+}
+
+void CookieFactory::pause(){
+    wareHouse->pause();
+    chocolateMachine->pause();
+    doughMachine1->pause();
+    doughMachine2->pause();
+    jointerMachine->pause();
+    kiln->pause();
+    qosDepartment->pause();
+    baler->pause();
+}
+
+void CookieFactory::resume(){
+    wareHouse->resume();
+    chocolateMachine->resume();
+    doughMachine1->resume();
+    doughMachine2->resume();
+    jointerMachine->resume();
+    kiln->resume();
+    qosDepartment->resume();
+    baler->resume();
 }

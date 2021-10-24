@@ -16,15 +16,14 @@
 // ESTE ARCHIVO CONTINE LA DEFICION DE TODAS LAS ESTRUCTURAS PARA LA FABRICA DE GALLETAS
 
 // Prototipos
-struct Cookie; // estructura de galleta
 struct Recipe; // la receta
 
 struct Pack; // estructura para paquete
 struct PackNodo; // nodo paquete
 struct PackList; // lista de paquetes
 
-struct OrderNodo; // nodo orden
-struct OrderList; // lista de ordenes
+struct RangeProbability;
+struct Order;
 struct Planner; // planificador
 
 struct Trolley; // carrito transportador
@@ -33,8 +32,7 @@ struct WareHouse; // almacen
 
 struct GramsConveyorBelt; // banda transportadora de gramos
 struct CookieConveyorBelt; // banda transportadora de galletas
-struct CookieInspectionBelt;
-struct Inspector;
+
 
 struct ChocolateMachine; // maquina de chocolate
 struct DoughMachine; // maquina de mezcla
@@ -44,19 +42,15 @@ struct JointerMachine; // maquina ensambladora
 struct Kiln; // horno
 struct Tray; // bandeja
 
+struct Qos; // departamento de calidad de servicio
+struct Inspector;
+
+struct Baler; // empacadora
+struct Transport;
+
+struct FinalWarehouse;
+
 struct CookieFactory; // Estructura princial de la fabrica
-
-struct Cookie{
-    bool cooked;
-    bool inspected;
-
-    // constructor
-    Cookie(){
-        cooked = false;
-        inspected = false;
-    }
-
-};
 
 struct Recipe{
     double doughAmount; // la receta por galleta
@@ -79,16 +73,12 @@ public:
     int cookies; // cantidad de galletas por paquete
     QString name;
     double packTimePerPack; // tiempo de empaque para este paquete
-    int packCounter;
-    int finishedPacks;
 
 public:
     Pack(int _cookies, QString _name, double _packTimePerPack){
         cookies = _cookies;
         name = _name;
         packTimePerPack = _packTimePerPack;
-        finishedPacks = 0;
-        packCounter = 0;
     }
 
     QString print(){
@@ -129,15 +119,43 @@ struct PackList{
 };
 
 // ---------------------------- ESTRUCTURAS  PARA PLANIFICACION -----------------------------------------
+struct RangeProbability{
+public:
+    int min; // abierto
+    int max; // cerrado
+
+    RangeProbability(){
+    }
+
+    void __init__(int _min, int _max){
+        min = _min;
+        max = _max;
+    }
+
+    bool isInRange(int number){
+        // pega la loteria y esta en el rango
+        return number > min && number <= max;
+    }
+
+
+};
+
 struct Order{
 public:
     int packAmount;
     Pack * pack;
+    int packedPackages; // paquetes enpacados de esta orden
+    int finishedPacks; // paquetes listos en el almacen final
+    RangeProbability * packProbability;
+    bool done = false;
 
 public:
     Order(int _packAmount, Pack * _pack){
         packAmount = _packAmount;
         pack = _pack;
+        packedPackages = 0;
+        finishedPacks = 0;
+        packProbability = new RangeProbability;
     }
 
     QString print(){
@@ -304,33 +322,6 @@ public:
     void updateConfig(double);
 };
 
-// banda transportadora de galletas con inspectores
-struct CookieInspectionBelt{
-    QMutex mutex;
-    QQueue<Cookie> queue;
-    int maxCookies;
-    Inspector * inspector1;
-    Inspector * inspector2;
-
-    CookieInspectionBelt(){
-//        inspector1 = new Inspector();
-    }
-};
-
-struct Inspector{
-    double wasteProbabilty;
-    int provedCookies;
-    int wastedCookies;
-    bool status;
-
-    Inspector(){
-        wasteProbabilty = 3; // generar un random para el porcentaje de desecho
-        provedCookies = 0;
-        wastedCookies = 0;
-    }
-
-};
-
 // ---------------------------- ESTRUCTURAS PARA LAS MAQUINAS DE MEZCLA Y CHOCOLATE -------------------
 
 struct ChocolateMachine : public QThread{
@@ -484,6 +475,7 @@ public:
     QComboBox * cmbTrays;
     QLineEdit * inpKilnTrayCookies;
     QLineEdit * inpKilnBakingTime;
+    QPushButton * btnControlTray;
 
 public:
     Kiln();
@@ -496,7 +488,7 @@ public:
     void fillTrays();
     void activeTrays();
     void printTrayConfig(int indexTray);
-    void updateTrayConfig(int indexTray, int _maxCookies, int _bakingTime);
+    void updateTrayConfig(int indexTray, int _maxCookies, int _bakingTime, QString status);
     void pause();
     void resume();
     void finish();
@@ -519,8 +511,6 @@ public:
     void __init__(int maxCookies, int bakingTime, CookieConveyorBelt * _cookieConveyorBelt2);
     void run();
 
-    void updateConfig();
-    void printConfig();
     int addCookies(int newCookies);
     bool isFull();
     void bakeCookies();
@@ -529,6 +519,169 @@ public:
     void resume();
     void finish();
 
+};
+
+// ----------------------------- ESTRUCTURAS PARA SUPERVISORES DE CALIDAD ------------------------------
+// departamento de calidad de servicio (revisan las galletas)
+struct Qos : public QThread{
+public:
+    Inspector * inspector1;
+    Inspector * inspector2;
+    CookieConveyorBelt * cookieConveyorBelt1;
+    CookieConveyorBelt * cookieConveyorBelt2;
+    CookieConveyorBelt * cookieConveyorBelt3;
+    //thread
+    bool isActive = true;
+    bool isPause = false;
+    //ui
+    QLabel * lblQoS;
+    QComboBox * cmbInspectors;
+    QLineEdit * inpInspectorTime;
+    QLineEdit * inpInspectorPerTime;
+    QLineEdit * inpInspectorProb;
+    QPushButton * btnControlInspector;
+
+public:
+    Qos();
+    void __init__(CookieConveyorBelt * cookieConveyorBelt1, CookieConveyorBelt * cookieConveyorBelt2, CookieConveyorBelt * cookieConveyorBelt3);
+    void run();
+
+    void printData();
+    void printInspectorConfig(int inspector);
+    void updateInspectorConfig(int inspector, int _cookiesPerTime, double _processTime, double _wasteProbability, QString status);
+    void pause();
+    void resume();
+    void finish();
+
+};
+
+struct Inspector: public QThread{
+public:
+    double wasteProbabilty;
+    QRandomGenerator ranGenerator;
+    int provedCookies;
+    int wastedCookies;
+    int cookiesPerTime;
+    double proccessTime;
+    CookieConveyorBelt * cookieConveyorBeltBefore;
+    CookieConveyorBelt * cookieConveyorBeltNext;
+
+    //thread
+    bool isActive = true;
+    bool isPause = false;
+
+public:
+    Inspector();
+    void __init__(int cookiesPerTime, double processTime, double wasteProbability, CookieConveyorBelt * cookieConveyorBeltBefore, CookieConveyorBelt * cookieConveyorBeltNext);
+    void run();
+
+    void proccessCookies();
+
+    void pause();
+    void resume();
+    void finish();
+};
+
+// ------------------------------------ ESTRUCTURAS PARA EL EMPACADO Y TRANSPORTE -----------------------------
+struct Baler :public QThread{
+public:
+    int packsPerTime;
+    Order * currentOrder;
+    Planner * planner;
+    QList<Transport *> transports;
+    CookieConveyorBelt * cookieConveyorBelt;
+    QRandomGenerator randomGen;
+    // thread
+    bool isActive = true;
+    bool isPause = false;
+
+    //ui
+    QLabel * lblBaler;
+    QLineEdit * inpBalerPerTime;
+    QPushButton * btnControl;
+    // transporte
+    QComboBox * cmbTransports;
+    QLineEdit * inpTransportMax;
+    QLineEdit * inpTransportTime;
+    QPushButton * btnControlTransport;
+    QLabel * lblTransports;
+
+
+public:
+    Baler();
+    void __init__(int _packsPerTime, Planner * _planner, CookieConveyorBelt * _cookieConveyorBelt);
+    void run();
+
+    void initTransports();
+    void updateCurrentPack();
+    void pack();
+    void placeOnTransport();
+    void printData();
+    void updateConfig(int _packsPerTime);
+    void printConfig();
+    // transporte
+    void printTransportConfig(int index);
+    void updateTransportConfig(int index, int _maxPacks, double deliveryTime, QString status);
+    void printTransportData();
+
+    void pause();
+    void resume();
+    void finish();
+
+};
+
+
+struct Transport : public QThread{
+public:
+    QString packName;
+    int maxPacks;
+    double deliveryTime;
+    int packs; // paquetes actuales
+    bool isAvailable = true;
+    Planner * planner;
+
+    // thread
+    bool isActive = true;
+    bool isPause = false;
+
+    //ui
+
+public:
+    Transport();
+    void __init__(Planner * _planner, QString _packName, int _maxPacks, double _deliveryTime);
+    void run();
+
+    int loadPacks(int newPacks);
+    void makePackDelivery();
+    void unloadPacks();
+    bool isFull();
+
+    void pause();
+    void resume();
+    void finish();
+};
+
+
+
+// ------------------------- ESTRUCTURA DEL ALAMACEN FINAL ----------------------------
+struct FinalWarehouse: public QThread{
+public:
+    Planner * planner;
+
+    //thread
+    bool isActive = true;
+    bool isPause = false;
+
+    //ui
+    QLabel * lblSummary;
+
+public:
+    FinalWarehouse();
+
+    void __init__(Planner * planner);
+    void run();
+
+    void printData();
 };
 
 
@@ -550,12 +703,25 @@ struct CookieFactory{
         JointerMachine * jointerMachine;
         CookieConveyorBelt * cookieConveyorBelt1;
         CookieConveyorBelt * cookieConveyorBelt2;
+        CookieConveyorBelt * cookieConveyorBelt3;
+        CookieConveyorBelt * cookieConveyorBelt4;
+
+        // inspeccion
+        Qos * qosDepartment;
+
+        // empacadora y transporte
+        Baler * baler;
+        // almacen final
+
+        FinalWarehouse * finalWarehouse;
 
         // mutex
         QMutex doughConveyorBeltMutex; // mutex para la banda de gramos de mezcla
         QMutex chocoConveyorBeltMutex; // mutex para a banda de gamos de chocolate
         QMutex cookieConveyorBelt1Mutex;
         QMutex cookieConveyorBelt2Mutex;
+        QMutex cookieConveyorBelt3Mutex;
+        QMutex cookieConveyorBelt4Mutex;
 
     public: // metodos
         CookieFactory();
@@ -564,6 +730,8 @@ struct CookieFactory{
         void initFactory();
         void run(); // pone a funcionar la fabrica
 
+        void pause();
+        void resume();
 };
 
 #endif // STRUCTS_H

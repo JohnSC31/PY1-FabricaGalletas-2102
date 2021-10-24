@@ -8,7 +8,11 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    // detectar el cambio de los comboboxs
     connect(ui->cmbTrays, SIGNAL(currentIndexChanged(int)), this, SLOT(on_cmbTrays_change(int)));
+    connect(ui->cmbInspectors, SIGNAL(currentIndexChanged(int)), this, SLOT(on_cmbInspectors_change(int)));
+    connect(ui->cmbTransports, SIGNAL(currentIndexChanged(int)), this, SLOT(on_cmbTransports_change(int)));
+
 
     // establecimiento de los parametros ui para las maquinas
     // Receta
@@ -58,6 +62,13 @@ MainWindow::MainWindow(QWidget *parent)
     //galletas 2 (despues de horno)
     factory->cookieConveyorBelt2->inpCookieBeltMax = ui->inpCookieBelt2Max;
     factory->cookieConveyorBelt2->lblCookieBelt = ui->lblCookieBelt2;
+    //galletas 3 (en medio de los inspectores)
+    factory->cookieConveyorBelt3->lblCookieBelt = ui->lblCookieBelt3;
+    factory->cookieConveyorBelt3->inpCookieBeltMax = ui->inpCookieBelt3Max;
+    // galletas 4 (despues de la inspecccion
+    factory->cookieConveyorBelt4->inpCookieBeltMax = ui->inpCookieBelt4Max;
+    factory->cookieConveyorBelt4->lblCookieBelt = ui->lblCookieBelt4;
+
     //Ensambladora
     factory->jointerMachine->lblJointerMachine = ui->lblJointerMachine;
     factory->jointerMachine->inpJointerMachineProccessTime = ui->inpJointerMachineProccessTime;
@@ -70,6 +81,26 @@ MainWindow::MainWindow(QWidget *parent)
     factory->kiln->cmbTrays = ui->cmbTrays;
     factory->kiln->inpKilnTrayCookies = ui->inpKilnTrayCookies;
     factory->kiln->inpKilnBakingTime = ui->inpKilnBakingTime;
+    factory->kiln->btnControlTray = ui->btnControlTray;
+    // servicios de calidad
+    factory->qosDepartment->lblQoS = ui->lblQoS;
+    factory->qosDepartment->cmbInspectors = ui->cmbInspectors;
+    factory->qosDepartment->inpInspectorTime = ui->inpInspectorTime;
+    factory->qosDepartment->inpInspectorPerTime = ui->inpInspectorPerTime;
+    factory->qosDepartment->inpInspectorProb = ui->inpInspectorProb;
+    factory->qosDepartment->btnControlInspector = ui->btnControlInspector;
+    // empacadora y transporte
+    factory->baler->lblBaler = ui->lblBaler;
+    factory->baler->btnControl = ui->btnControlBaler;
+    factory->baler->inpBalerPerTime = ui->inpBalerPerTime;
+    factory->baler->lblTransports = ui->lblTransports;
+    factory->baler->cmbTransports = ui->cmbTransports;
+    factory->baler->inpTransportMax = ui->inpTransportMax;
+    factory->baler->inpTransportTime = ui->inpTransportTime;
+    factory->baler->btnControlTransport = ui->btnControlTransport;
+    // transporte
+    // almacen final
+    factory->finalWarehouse->lblSummary = ui->lblSummary;
 
 
     // inicializacion de la fabrica
@@ -93,6 +124,14 @@ void MainWindow::on_btnStart_clicked(){
     factory->run();
 }
 
+void MainWindow::on_btnPause_clicked(){
+    factory->pause();
+}
+
+void MainWindow::on_btnResume_clicked(){
+    factory->resume();
+}
+
 // agregar una orden al plan de produccion
 void MainWindow::on_btnAddOrder_clicked(){
     QString packSelected = ui->cmbPacks->currentText();
@@ -107,11 +146,12 @@ void MainWindow::on_btnAddOrder_clicked(){
 void MainWindow::on_btnAddPack_clicked(){
     QString nameTxt = ui->inpPackName->text();
     QString cookiesTxt = ui->inpPackCookies->text();
+    QString packTime = ui->inpPackTime->text();
 
-    if(validStr(nameTxt) && validNumber(cookiesTxt)){
+    if(validStr(nameTxt) && validNumber(cookiesTxt) && validNumber(packTime)){
        ui->inpPackName->setText("");
        ui->inpPackCookies->setText("");
-       factory->packList->insertPack(new Pack(cookiesTxt.toDouble(), nameTxt, 3));
+       factory->packList->insertPack(new Pack(cookiesTxt.toDouble(), nameTxt, packTime.toDouble()));
     }
 
 }
@@ -224,6 +264,11 @@ void MainWindow::on_cmbTrays_change(int index){
        ui->inpKilnBakingTime->setText("");
    }else{
        factory->kiln->printTrayConfig(index - 1);
+       if(index - 1 == 0 || index - 1 == 1){
+           ui->btnControlTray->setEnabled(false);
+       }else{
+           ui->btnControlTray->setEnabled(true);
+       }
    }
 }
 
@@ -231,8 +276,62 @@ void MainWindow::on_btnUpdateTray_clicked(){
     int trayIndex = ui->cmbTrays->currentIndex();
     QString maxCookies = ui->inpKilnTrayCookies->text();
     QString bakingTime = ui->inpKilnBakingTime->text();
+    QString status = ui->btnControlTray->text();
     if(validNumber(maxCookies) && validNumber(bakingTime) && trayIndex >= 0){
-        factory->kiln->updateTrayConfig(trayIndex - 1, maxCookies.toInt(), bakingTime.toInt());
+        factory->kiln->updateTrayConfig(trayIndex - 1, maxCookies.toInt(), bakingTime.toInt(), status);
+    }
+
+}
+
+// combo box de los inspectores
+void MainWindow::on_cmbInspectors_change(int index){
+   if(index == 0){
+       ui->inpInspectorTime->setText("");
+       ui->inpInspectorPerTime->setText("");
+       ui->inpInspectorProb->setText("");
+   }else{
+       factory->qosDepartment->printInspectorConfig(index);
+   }
+}
+
+void MainWindow::on_btnUpdateInspector_clicked(){
+    int inspector = ui->cmbInspectors->currentIndex();
+    QString cookiesPerTime = ui->inpInspectorPerTime->text();
+    QString processTime = ui->inpInspectorTime->text();
+    QString wasteProb = ui->inpInspectorProb->text();
+    QString status = ui->btnControlInspector->text();
+    if(validNumber(cookiesPerTime) && validNumber(processTime) && validNumber(wasteProb) && inspector >= 0){
+        factory->qosDepartment->updateInspectorConfig(inspector, cookiesPerTime.toInt(), processTime.toDouble(), wasteProb.toDouble(), status);
+    }
+
+}
+
+// actualizacion de la empacadora
+void MainWindow::on_btnUpdateBaler_clicked(){
+    QString packsPerTime = ui->inpBalerPerTime->text();
+
+    if(validNumber(packsPerTime)){
+        factory->baler->updateConfig(packsPerTime.toInt());
+    }
+}
+
+// actualizacion del transporte
+void MainWindow::on_cmbTransports_change(int index){
+   if(index == 0){
+       ui->inpTransportMax->setText("");
+       ui->inpTransportTime->setText("");
+   }else{
+       factory->baler->printTransportConfig(index - 1);
+   }
+}
+
+void MainWindow::on_btnUpdateTransport_clicked(){
+    int trasnportIndex = ui->cmbTransports->currentIndex();
+    QString maxPacks = ui->inpTransportMax->text();
+    QString deliveryTime = ui->inpTransportTime->text();
+    QString status = ui->btnControlTransport->text();
+    if(validNumber(maxPacks) && validNumber(deliveryTime) && trasnportIndex >= 0){
+        factory->baler->updateTransportConfig(trasnportIndex - 1, maxPacks.toInt(), deliveryTime.toDouble(), status);
     }
 
 }
@@ -293,6 +392,43 @@ void MainWindow::on_btnControlKiln_clicked(){
     }
 
 }
+
+void MainWindow::on_btnControlTray_clicked(){
+    if(ui->btnControlTray->text() == "Apagar"){
+        ui->btnControlTray->setText("Encender");
+
+    }else if(ui->btnControlTray->text() == "Encender"){
+        ui->btnControlTray->setText("Apagar");
+    }
+}
+
+void MainWindow::on_btnControlInspector_clicked(){
+    if(ui->btnControlInspector->text() == "Apagar"){
+        ui->btnControlInspector->setText("Encender");
+
+    }else if(ui->btnControlInspector->text() == "Encender"){
+        ui->btnControlInspector->setText("Apagar");
+    }
+}
+
+void MainWindow::on_btnControlBaler_clicked(){
+    if(ui->btnControlBaler->text() == "Apagar"){
+        factory->baler->pause();
+
+    }else if(ui->btnControlBaler->text() == "Encender"){
+        factory->baler->resume();
+    }
+}
+
+void MainWindow::on_btnControlTransport_clicked(){
+    if(ui->btnControlTransport->text() == "Apagar"){
+        ui->btnControlTransport->setText("Encender");
+
+    }else if(ui->btnControlTransport->text() == "Encender"){
+        ui->btnControlTransport->setText("Apagar");
+    }
+}
+
 
 
 

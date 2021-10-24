@@ -69,24 +69,13 @@ int Tray::addCookies(int newCookies){
 }
 
 
-void Tray::updateConfig(){
-//    cookieCapacity = _cookieCapacity;
-    printConfig();
-}
-
-void Tray::printConfig(){
-//    inpCapacity->setText(QString::number(cookieCapacity));
-}
-
 // funciones para control del thread
 void Tray::pause(){
     isPause = true;
-//    controlBtn->setText("Encender");
 }
 
 void Tray::resume(){
     isPause = false;
-//    controlBtn->setText("Apagar");
 }
 
 void Tray::finish(){

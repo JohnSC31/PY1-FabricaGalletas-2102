@@ -83,7 +83,7 @@ void Kiln::printData(){
     QString trayStatus;
     QString str = "";
     for(int i = 0; i < trays.size(); i++){
-        trayStatus = trays.at(i)->isActive ? "+":"-";
+        trayStatus = trays.at(i)->isPause ? "-":"+";
         str += trayStatus + " B" + QString::number(i + 1) +" "+ QString::number(trays.at(i)->cookies) + "/" + QString::number(trays.at(i)->maxCookies) + "\n";
     }
     lblKilnTrays->setText(str);
@@ -102,19 +102,22 @@ void Kiln::printConfig(){
 void Kiln::printTrayConfig(int index){
     inpKilnTrayCookies->setText(QString::number(trays.at(index)->maxCookies));
     inpKilnBakingTime->setText(QString::number(trays.at(index)->bakingTime));
-    //controlTrayBtn->setText(); // configurar el boton para encender y apagar
+    // control btn
+    btnControlTray->setText(trays.at(index)->isPause ? "Encender" : "Apagar");
 }
 
-void Kiln::updateTrayConfig(int indexTray, int _maxCookies, int _bakingTime){
+void Kiln::updateTrayConfig(int indexTray, int _maxCookies, int _bakingTime, QString status){
     trays.at(indexTray)->maxCookies = _maxCookies;
     trays.at(indexTray)->bakingTime = _bakingTime;
+    if(status == "Encender"){
+        trays.at(indexTray)->pause();
+    }else{
+        trays.at(indexTray)->resume();
+    }
     printTrayConfig(indexTray);
     printData();
 }
 
-//void Kiln::controlTray(){
-
-//}
 // funciones para control del thread
 void Kiln::pause(){
     isPause = true;
