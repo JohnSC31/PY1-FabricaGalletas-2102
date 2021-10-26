@@ -42,7 +42,7 @@ void Baler::run(){
         printData();
         printTransportData();
         // funcionamiento de la maquina
-        if(currentOrder->packAmount > currentOrder->packedPackages){
+        if(currentOrder != NULL && currentOrder->packAmount > currentOrder->packedPackages){
             if(cookieConveyorBelt->cookies >= currentOrder->pack->cookies * packsPerTime){
                 // hay galletas suficientes para enpacar la cantidad de paquetes por tiempo de la orden actual
                 pack();
@@ -53,8 +53,12 @@ void Baler::run(){
 
         }else{
             // actualizar la orden actual
-            currentOrder->done = true;
+            if(currentOrder != NULL){
+                currentOrder->done = true;
+            }
+
             updateCurrentPack();
+            qDebug() << currentOrder->pack->name;
         }
         sleep(1);
 
@@ -121,6 +125,7 @@ void Baler::updateCurrentPack(){
             }
         }
     }
+    qDebug() << "Se asigna paquete a empacar";
 }
 
 

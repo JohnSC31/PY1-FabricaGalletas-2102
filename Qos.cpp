@@ -7,8 +7,8 @@ Qos::Qos(){
 }
 
 void Qos::__init__(CookieConveyorBelt * _cookieConveyorBelt1, CookieConveyorBelt * _cookieConveyorBelt2, CookieConveyorBelt * _cookieConveyorBelt3){
-    inspector1->__init__(3, 3, 10, _cookieConveyorBelt1, _cookieConveyorBelt2);
-    inspector2->__init__(3, 3, 10, _cookieConveyorBelt2, _cookieConveyorBelt3);
+    inspector1->__init__(2, 2, 10, _cookieConveyorBelt1, _cookieConveyorBelt2);
+    inspector2->__init__(2, 2, 10, _cookieConveyorBelt2, _cookieConveyorBelt3);
 
     cmbInspectors->addItem("Inspectores", -1);
     cmbInspectors->addItem("Inspector 1", 1);

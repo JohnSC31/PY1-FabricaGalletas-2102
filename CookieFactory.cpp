@@ -41,13 +41,15 @@ void CookieFactory::initFactory(){
     wareHouse->__init__(chocolateMachine, doughMachine1, doughMachine2); // se pasan las maquinas de mezcla
 
     // inicializacion de la lista de paquetes
-    packList->insertPack(new Pack(4, "Paquetito", 3));
-    packList->insertPack(new Pack(10, "Paquete", 4));
+    packList->insertPack(new Pack(2, "Paquetito", 3));
+    packList->insertPack(new Pack(4, "Paquete", 4));
     packList->insertPack(new Pack(16, "Tubo", 5));
 
     // inicializacion de ordenes
-    planner->recipe->updateRecipe(20, 15);
-    planner->addOrderPlan(new Order(4, packList->searchPack("Paquete")));
+    planner->recipe->updateRecipe(10, 5);
+    planner->addOrderPlan(new Order(10, packList->searchPack("Paquetito")));
+    planner->addOrderPlan(new Order(10, packList->searchPack("Paquete")));
+    planner->addOrderPlan(new Order(10, packList->searchPack("Tubo")));
 
     cookieConveyorBelt1->__init__(50, &cookieConveyorBelt1Mutex);
     // maquina ensambladora

@@ -586,7 +586,7 @@ public:
 struct Baler :public QThread{
 public:
     int packsPerTime;
-    Order * currentOrder;
+    Order * currentOrder = NULL;
     Planner * planner;
     QList<Transport *> transports;
     CookieConveyorBelt * cookieConveyorBelt;
